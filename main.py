@@ -88,8 +88,20 @@ def initialize_hubspace():
         hubspace_client = Hubspace(HUBSPACE_EMAIL, HUBSPACE_PASSWORD)
         
         print("📱 Fetching devices...")
-        all_devices = hubspace_client.getDevices()
-        print(f"📦 Total devices found: {len(all_devices)}")
+        
+        # Add retry logic for the getDevices call
+        max_retries = 3
+        for attempt in range(max_retries):
+            try:
+                all_devices = hubspace_client.getDevices()
+                print(f"📦 Total devices found: {len(all_devices)}")
+                break
+            except Exception as e:
+                print(f"⚠️ Attempt {attempt + 1} failed: {e}")
+                if attempt == max_retries - 1:
+                    raise e
+                import time
+                time.sleep(2)  # Wait 2 seconds before retry
         
         # Filter for light devices
         light_devices = []
@@ -255,10 +267,16 @@ async def control_lights(
     
     global hubspace_client, light_devices
     
-    # Re-authenticate with Hubspace before each command
+    # Try to re-authenticate with Hubspace before each command
     print("🔄 Re-authenticating with Hubspace...")
-    if not initialize_hubspace():
-        raise HTTPException(status_code=500, detail="Failed to authenticate with Hubspace")
+    auth_success = initialize_hubspace()
+    
+    if not auth_success:
+        print("⚠️ Fresh authentication failed, checking if we have cached devices...")
+        if not light_devices:
+            raise HTTPException(status_code=500, detail="Failed to authenticate with Hubspace and no cached devices available")
+        else:
+            print(f"✅ Using {len(light_devices)} cached devices")
     
     print(f"🔍 Found {len(light_devices)} devices to control")
     
