@@ -204,6 +204,13 @@ async def root():
 @app.get("/lights")
 async def get_lights():
     """Get list of all available lights"""
+    global hubspace_client, light_devices
+    
+    # Re-authenticate with Hubspace before fetching devices
+    print("🔄 Re-authenticating with Hubspace for device list...")
+    if not initialize_hubspace():
+        raise HTTPException(status_code=500, detail="Failed to authenticate with Hubspace")
+    
     lights = []
     for device in light_devices:
         attrs = get_device_attributes(device)
@@ -227,8 +234,14 @@ async def control_lights(
 ):
     """Control lights with the specified parameters"""
     
-    if not hubspace_client or not light_devices:
-        raise HTTPException(status_code=500, detail="Hubspace client not initialized")
+    global hubspace_client, light_devices
+    
+    # Re-authenticate with Hubspace before each command
+    print("🔄 Re-authenticating with Hubspace...")
+    if not initialize_hubspace():
+        raise HTTPException(status_code=500, detail="Failed to authenticate with Hubspace")
+    
+    print(f"🔍 Found {len(light_devices)} devices to control")
     
     # Validate request
     if not any([request.action, request.brightness is not None, request.color]):
@@ -250,11 +263,14 @@ async def control_lights(
         if not target_devices:
             raise HTTPException(status_code=404, detail=f"No light found with name '{request.name}'")
     
+    print(f"🎯 Targeting {len(target_devices)} devices")
+    
     # Control devices in threads
     threads = []
     results = []
     
     for device in target_devices:
+        print(f"⚡ Controlling device: {device.getName()}")
         thread = threading.Thread(
             target=lambda d=device: results.append(
                 control_device_thread(d, request.action, request.brightness, request.color)
@@ -271,6 +287,8 @@ async def control_lights(
     success_count = sum(1 for r in results if r.success)
     total_count = len(results)
     
+    print(f"✅ Control complete: {success_count}/{total_count} devices successful")
+    
     response = ControlResponse(
         success=success_count == total_count,
         message=f"Controlled {success_count}/{total_count} devices successfully",
@@ -283,9 +301,15 @@ async def control_lights(
 @app.get("/health")
 async def health_check():
     """Health check endpoint"""
+    global hubspace_client, light_devices
+    
+    # Re-authenticate to get current status
+    print("🔄 Re-authenticating with Hubspace for health check...")
+    hubspace_connected = initialize_hubspace()
+    
     return {
         "status": "healthy",
-        "hubspace_connected": hubspace_client is not None,
+        "hubspace_connected": hubspace_connected,
         "lights_available": len(light_devices),
         "timestamp": time.time()
     }
