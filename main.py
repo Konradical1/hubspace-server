@@ -82,16 +82,21 @@ def initialize_hubspace():
     
     try:
         print("🔐 Initializing Hubspace client...")
+        print(f"📧 Using email: {HUBSPACE_EMAIL}")
+        print(f"🔑 Password length: {len(HUBSPACE_PASSWORD) if HUBSPACE_PASSWORD else 0}")
+        
         hubspace_client = Hubspace(HUBSPACE_EMAIL, HUBSPACE_PASSWORD)
         
         print("📱 Fetching devices...")
         all_devices = hubspace_client.getDevices()
+        print(f"📦 Total devices found: {len(all_devices)}")
         
         # Filter for light devices
         light_devices = []
         for device in all_devices:
             name = device.getName()
             dev_type = device.getDeviceClass()
+            print(f"🔍 Device: {name} (Type: {dev_type})")
             if name and dev_type and dev_type.lower() == 'light':
                 light_devices.append(device)
                 print(f"✅ Found light: {name}")
@@ -101,6 +106,9 @@ def initialize_hubspace():
         
     except Exception as e:
         print(f"❌ Failed to initialize Hubspace: {e}")
+        print(f"❌ Error type: {type(e).__name__}")
+        import traceback
+        print(f"❌ Full traceback: {traceback.format_exc()}")
         return False
 
 def get_device_attributes(device):
