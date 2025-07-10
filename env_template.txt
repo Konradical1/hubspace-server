@@ -1,0 +1,10 @@
+# Hubspace credentials
+HUBSPACE_EMAIL=fischerpaxton@gmail.com
+HUBSPACE_PASSWORD=EagleAva4!
+
+# Security token for API access
+SECRET_TOKEN=SECRET123
+
+# Server configuration
+HOST=0.0.0.0
+PORT=8000 
