@@ -1,0 +1,11 @@
+venv/
+__pycache__/
+*.pyc
+.env
+.git/
+.gitignore
+README.md
+README_API.md
+run_server.sh
+env_template.txt
+hubspace_control.py 
