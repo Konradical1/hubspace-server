@@ -209,6 +209,17 @@ async def root():
         }
     }
 
+@app.get("/test-env")
+async def test_environment():
+    """Test endpoint to check environment variables"""
+    return {
+        "email_set": bool(HUBSPACE_EMAIL),
+        "password_set": bool(HUBSPACE_PASSWORD),
+        "email_length": len(HUBSPACE_EMAIL) if HUBSPACE_EMAIL else 0,
+        "password_length": len(HUBSPACE_PASSWORD) if HUBSPACE_PASSWORD else 0,
+        "email_preview": HUBSPACE_EMAIL[:10] + "..." if HUBSPACE_EMAIL and len(HUBSPACE_EMAIL) > 10 else HUBSPACE_EMAIL
+    }
+
 @app.get("/lights")
 async def get_lights():
     """Get list of all available lights"""
